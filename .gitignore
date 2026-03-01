@@ -1,0 +1,27 @@
+# Gradle / build output
+.gradle/
+.gradle-user/
+build/
+**/build/
+.kotlin/
+
+# Android / Studio
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# IntelliJ / Android Studio
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Project planning docs
+docs/plans/

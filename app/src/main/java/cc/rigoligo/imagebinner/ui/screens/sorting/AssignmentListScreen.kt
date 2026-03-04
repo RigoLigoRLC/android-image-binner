@@ -12,7 +12,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import cc.rigoligo.imagebinner.R
 
 @Composable
 fun AssignmentListScreen(
@@ -29,7 +31,7 @@ fun AssignmentListScreen(
         onDismissRequest = onCloseRequest,
         title = {
             Text(
-                text = "Temporary assignments",
+                text = stringResource(R.string.sorting_temporary_assignments_title),
                 style = MaterialTheme.typography.titleMedium
             )
         },
@@ -39,7 +41,7 @@ fun AssignmentListScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 if (state.items.isEmpty()) {
-                    Text(text = "No assignments yet.")
+                    Text(text = stringResource(R.string.sorting_no_assignments))
                 } else {
                     LazyColumn(
                         modifier = Modifier.heightIn(max = 360.dp),
@@ -47,10 +49,18 @@ fun AssignmentListScreen(
                     ) {
                         items(state.items, key = { it.mediaId }) { item ->
                             val targetLabel = when {
-                                item.targetAlbumId == SortingViewModel.TRASH_TARGET_ID -> "Trash"
-                                else -> albumNames[item.targetAlbumId] ?: item.targetLabel
+                                item.targetAlbumId == SortingViewModel.TRASH_TARGET_ID -> {
+                                    stringResource(R.string.fallback_trash)
+                                }
+                                else -> albumNames[item.targetAlbumId]
+                                    ?: stringResource(R.string.fallback_unknown_album)
                             }
-                            Text(text = "${item.mediaLabel} -> $targetLabel")
+                            val mediaLabel = item.mediaLabel
+                                ?: item.mediaFallbackIndex?.let { index ->
+                                    stringResource(R.string.fallback_photo_index, index)
+                                }
+                                ?: stringResource(R.string.fallback_photo)
+                            Text(text = stringResource(R.string.sorting_assignment_toast, mediaLabel, targetLabel))
                         }
                     }
                 }
@@ -58,7 +68,7 @@ fun AssignmentListScreen(
         },
         confirmButton = {
             TextButton(onClick = onCloseRequest) {
-                Text(text = "Close")
+                Text(text = stringResource(R.string.sorting_close))
             }
         }
     )

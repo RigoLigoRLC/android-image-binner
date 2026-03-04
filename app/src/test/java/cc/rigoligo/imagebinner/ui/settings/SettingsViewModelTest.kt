@@ -2,6 +2,7 @@ package cc.rigoligo.imagebinner.ui.settings
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import cc.rigoligo.imagebinner.domain.AppLanguage
 import cc.rigoligo.imagebinner.data.local.AppDatabase
 import cc.rigoligo.imagebinner.domain.SettingsManager
 import cc.rigoligo.imagebinner.domain.SortOrder
@@ -104,6 +105,41 @@ class SettingsViewModelTest {
 
         assertEquals(SortOrder.NEWEST_FIRST, viewModel.uiState.value.defaultSortOrder)
         assertEquals(SortOrder.NEWEST_FIRST, manager.getSettings().defaultSortOrder)
+    }
+
+    @Test
+    fun setLanguage_updatesStatePersistenceAndAppliesLocale() = runTest {
+        val manager = SettingsManager(db.settingsDao())
+        val appliedLanguages = mutableListOf<AppLanguage>()
+        val viewModel = SettingsViewModel(
+            settingsManager = manager,
+            sdkIntProvider = { 30 },
+            ioDispatcher = ioDispatcher,
+            applyLanguage = { language -> appliedLanguages += language }
+        )
+        flushViewModelWork()
+
+        viewModel.setLanguage(AppLanguage.SIMPLIFIED_CHINESE)
+        flushViewModelWork()
+
+        assertEquals(AppLanguage.SIMPLIFIED_CHINESE, viewModel.uiState.value.language)
+        assertEquals(AppLanguage.SIMPLIFIED_CHINESE, manager.getSettings().language)
+        assertEquals(listOf(AppLanguage.SIMPLIFIED_CHINESE), appliedLanguages)
+    }
+
+    @Test
+    fun init_loadsPersistedLanguageIntoUiState() = runTest {
+        val manager = SettingsManager(db.settingsDao())
+        manager.updateLanguage(AppLanguage.ENGLISH)
+        val viewModel = SettingsViewModel(
+            settingsManager = manager,
+            sdkIntProvider = { 30 },
+            ioDispatcher = ioDispatcher
+        )
+
+        flushViewModelWork()
+
+        assertEquals(AppLanguage.ENGLISH, viewModel.uiState.value.language)
     }
 
     private fun TestScope.flushViewModelWork() {

@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import cc.rigoligo.imagebinner.data.local.dao.ProfileDao
 import cc.rigoligo.imagebinner.data.local.dao.SessionDao
 import cc.rigoligo.imagebinner.data.local.dao.SettingsDao
@@ -21,7 +23,7 @@ import cc.rigoligo.imagebinner.data.local.entity.SessionAssignmentEntity
         SavedSessionEntity::class,
         SessionAssignmentEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -41,10 +43,21 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     DATABASE_NAME
-                ).build().also { instance = it }
+                )
+                    .addMigrations(MIGRATION_2_3)
+                    .build()
+                    .also { instance = it }
             }
         }
 
         private const val DATABASE_NAME: String = "image_binner.db"
+
+        val MIGRATION_2_3: Migration = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE app_settings ADD COLUMN language TEXT NOT NULL DEFAULT 'SYSTEM'"
+                )
+            }
+        }
     }
 }

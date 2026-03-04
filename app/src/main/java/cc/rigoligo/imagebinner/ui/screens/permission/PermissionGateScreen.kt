@@ -10,7 +10,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import cc.rigoligo.imagebinner.R
 
 @Composable
 fun PermissionGateScreen(
@@ -26,12 +28,12 @@ fun PermissionGateScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(text = "ImageBinner needs full photo access to continue.")
+            Text(text = stringResource(R.string.permission_gate_access_required))
             Button(
                 modifier = Modifier.padding(top = 16.dp),
                 onClick = onRequestFullAccess
             ) {
-                Text(text = "Grant full access")
+                Text(text = stringResource(R.string.permission_gate_grant_access))
             }
         }
     }

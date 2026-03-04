@@ -1,3 +1,123 @@
 <resources>
     <string name="app_name">ImageBinner</string>
+    <string name="permission_gate_access_required">ImageBinner needs full photo access to continue.</string>
+    <string name="permission_gate_grant_access">Grant full access</string>
+
+    <string name="main_tab_profiles">Profiles</string>
+    <string name="main_tab_settings">Settings</string>
+    <string name="main_commit_permission_required">Commit needs media edit permission. Please allow and retry.</string>
+    <string name="main_commit_failed">Commit failed.</string>
+    <string name="main_commit_cancelled_permission">Commit cancelled: media edit permission was not granted.</string>
+    <string name="main_report_export_success">Report exported to Downloads.</string>
+    <string name="main_report_export_failed">Report export failed.</string>
+    <string name="main_error_no_active_session">No active sorting session.</string>
+    <string name="main_error_no_assignments">No assignments to commit.</string>
+    <string name="main_error_profile_not_found">Profile not found.</string>
+    <string name="main_error_unable_open_destination">Unable to open destination.</string>
+
+    <string name="fallback_unknown_album">Unknown album</string>
+    <string name="fallback_photo">Photo</string>
+    <string name="fallback_photo_index">Photo %1$d</string>
+    <string name="fallback_trash">Trash</string>
+    <string name="fallback_not_available">-</string>
+
+    <string name="profiles_create">Create profile</string>
+    <string name="profiles_no_albums">No albums available to create a profile.</string>
+    <string name="profiles_empty">No profiles yet</string>
+    <string name="profiles_source_label">Source: %1$s</string>
+    <string name="profiles_destinations_label">Destinations: %1$d</string>
+    <string name="profiles_selected">Selected</string>
+    <string name="profiles_edit_selected">Edit selected</string>
+    <string name="profiles_delete_selected">Delete selected</string>
+    <string name="profiles_default_name">Profile %1$d</string>
+
+    <string name="profile_editor_title">Edit profile: %1$s</string>
+    <string name="profile_editor_source_album">Source album</string>
+    <string name="profile_editor_selected_suffix"> (selected)</string>
+    <string name="profile_editor_destination_albums">Destination albums</string>
+    <string name="profile_editor_remove">Remove</string>
+    <string name="profile_editor_add_destination">Add destination</string>
+    <string name="profile_editor_add_album">Add %1$s</string>
+    <string name="profile_editor_close">Close</string>
+
+    <string name="session_start_sorting">Start sorting</string>
+    <string name="session_prompt_resume_restart_title">Resume current session?</string>
+    <string name="session_prompt_resume_discard_title">Resume existing session?</string>
+    <string name="session_prompt_resume_restart_body">A saved session already exists for this profile.</string>
+    <string name="session_prompt_resume_discard_body">Another profile has an in-progress session.</string>
+    <string name="session_prompt_resume_existing">Resume existing</string>
+    <string name="session_prompt_restart_session">Restart session</string>
+    <string name="session_prompt_discard_and_start_new">Discard and start new</string>
+
+    <string name="report_back">Back</string>
+    <string name="report_title">Commit report</string>
+    <string name="report_total">Total: %1$d</string>
+    <string name="report_succeeded">Succeeded: %1$d</string>
+    <string name="report_failed">Failed: %1$d</string>
+    <string name="report_show_failed_only">Show failed only</string>
+    <string name="report_export_csv">Export CSV</string>
+    <string name="report_export_json">Export JSON</string>
+    <string name="report_failed_items">Failed items</string>
+    <string name="report_all_items">All items</string>
+    <string name="report_no_items">No items to show.</string>
+    <string name="report_item_media">Media: %1$s</string>
+    <string name="report_item_target">Target: %1$s</string>
+    <string name="report_item_action">Action: %1$s</string>
+    <string name="report_item_status">Status: %1$s</string>
+    <string name="report_item_error">Error: %1$s</string>
+    <string name="report_status_success">Success</string>
+    <string name="report_status_failed">Failed</string>
+    <string name="report_unknown_error">Unknown error</string>
+    <string name="report_action_move_to_album">Move to album</string>
+    <string name="report_action_move_to_trash_album">Move to trash album</string>
+    <string name="report_action_move_to_system_trash">Move to system trash</string>
+    <string name="report_file_name_prefix">commit-report</string>
+    <string name="report_file_name_fallback">report</string>
+    <string name="report_export_csv_header_media_id">Media ID</string>
+    <string name="report_export_csv_header_target_album_id">Target Album ID</string>
+    <string name="report_export_csv_header_action_code">Action Code</string>
+    <string name="report_export_csv_header_action_label">Action</string>
+    <string name="report_export_csv_header_status_code">Status Code</string>
+    <string name="report_export_csv_header_status_label">Status</string>
+    <string name="report_export_csv_header_error_message">Error Message</string>
+    <string name="report_export_status_success_code">SUCCESS</string>
+    <string name="report_export_status_failed_code">FAILED</string>
+
+    <string name="sorting_back">Back</string>
+    <string name="sorting_list">List</string>
+    <string name="sorting_commit">Commit</string>
+    <string name="sorting_captured">Captured: %1$s</string>
+    <string name="sorting_assigned">Assigned: %1$d</string>
+    <string name="sorting_current_destination">Current destination: %1$s</string>
+    <string name="sorting_unassigned">Unassigned</string>
+    <string name="sorting_change_sort_order_title">Change sort order</string>
+    <string name="sorting_change_sort_order_message">After switching mode, where should focus go?</string>
+    <string name="sorting_jump_first_unsorted">Jump to first unsorted</string>
+    <string name="sorting_jump_first_image">Jump to first image</string>
+    <string name="sorting_stay_at_place">Stay at place</string>
+    <string name="sorting_cancel">Cancel</string>
+    <string name="sorting_no_image">No image to display</string>
+    <string name="sorting_unable_load_image">Unable to load image</string>
+    <string name="sorting_thumbnail_assigned_badge">OK</string>
+    <string name="sorting_assignment_toast">%1$s -&gt; %2$s</string>
+    <string name="sorting_temporary_assignments_title">Temporary assignments</string>
+    <string name="sorting_no_assignments">No assignments yet.</string>
+    <string name="sorting_close">Close</string>
+
+    <string name="sort_order_oldest_first">Oldest first</string>
+    <string name="sort_order_newest_first">Newest first</string>
+
+    <string name="settings_about_title">About</string>
+    <string name="settings_about_name">Image Binner</string>
+    <string name="settings_about_description">Sort photos manually into profile bins and track commits.</string>
+    <string name="settings_default_sort_order_title">Default sort order</string>
+    <string name="settings_trash_behavior_title">Trash behavior</string>
+    <string name="settings_trash_mode_album">Move to trash album</string>
+    <string name="settings_trash_mode_system">Use system trash</string>
+    <string name="settings_system_trash_unavailable">System trash is unavailable on Android API 24-29.</string>
+    <string name="settings_language_title">Language</string>
+    <string name="settings_language_reload_notice">(will reload application)</string>
+    <string name="settings_language_system_default">System default</string>
+    <string name="settings_language_english">English</string>
+    <string name="settings_language_simplified_chinese">Simplified Chinese</string>
 </resources>

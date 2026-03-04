@@ -21,7 +21,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import cc.rigoligo.imagebinner.R
 import cc.rigoligo.imagebinner.data.local.AppDatabase
 import cc.rigoligo.imagebinner.data.media.AlbumItem
 import cc.rigoligo.imagebinner.data.media.MediaStoreRepository
@@ -65,6 +67,8 @@ fun ProfilesScreen(
     val state by viewModel.uiState.collectAsState()
     var showEditor by remember { mutableStateOf(false) }
     val selectedProfile = state.selectedProfile
+    val unknownAlbumLabel = stringResource(R.string.fallback_unknown_album)
+    val defaultProfileName = stringResource(R.string.profiles_default_name, state.profiles.size + 1)
 
     Column(
         modifier = modifier
@@ -73,17 +77,17 @@ fun ProfilesScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Button(
-            onClick = { viewModel.createProfile() },
+            onClick = { viewModel.createProfile(name = defaultProfileName) },
             enabled = state.availableAlbums.isNotEmpty()
         ) {
-            Text(text = "Create profile")
+            Text(text = stringResource(R.string.profiles_create))
         }
         if (state.availableAlbums.isEmpty()) {
-            Text(text = "No albums available to create a profile.")
+            Text(text = stringResource(R.string.profiles_no_albums))
         }
 
         if (state.profiles.isEmpty()) {
-            Text(text = "No profiles yet")
+            Text(text = stringResource(R.string.profiles_empty))
         } else {
             LazyColumn(
                 modifier = Modifier.weight(1f),
@@ -101,10 +105,24 @@ fun ProfilesScreen(
                                 text = profile.name,
                                 style = MaterialTheme.typography.titleMedium
                             )
-                            Text(text = "Source: ${albumNameById(profile.sourceAlbumId, state.availableAlbums)}")
-                            Text(text = "Destinations: ${profile.destinationAlbumIds.size}")
+                            Text(
+                                text = stringResource(
+                                    R.string.profiles_source_label,
+                                    albumNameById(
+                                        albumId = profile.sourceAlbumId,
+                                        albums = state.availableAlbums,
+                                        unknownAlbumLabel = unknownAlbumLabel
+                                    )
+                                )
+                            )
+                            Text(
+                                text = stringResource(
+                                    R.string.profiles_destinations_label,
+                                    profile.destinationAlbumIds.size
+                                )
+                            )
                             if (isSelected) {
-                                Text(text = "Selected")
+                                Text(text = stringResource(R.string.profiles_selected))
                             }
                         }
                     }
@@ -120,13 +138,13 @@ fun ProfilesScreen(
                 onClick = { showEditor = true },
                 enabled = selectedProfile != null
             ) {
-                Text(text = "Edit selected")
+                Text(text = stringResource(R.string.profiles_edit_selected))
             }
             Button(
                 onClick = { viewModel.deleteSelectedProfile() },
                 enabled = selectedProfile != null
             ) {
-                Text(text = "Delete selected")
+                Text(text = stringResource(R.string.profiles_delete_selected))
             }
         }
 
@@ -161,6 +179,10 @@ fun ProfilesScreen(
     }
 }
 
-private fun albumNameById(albumId: String, albums: List<AlbumItem>): String {
-    return albums.firstOrNull { it.id == albumId }?.name ?: "Unknown album"
+private fun albumNameById(
+    albumId: String,
+    albums: List<AlbumItem>,
+    unknownAlbumLabel: String
+): String {
+    return albums.firstOrNull { it.id == albumId }?.name ?: unknownAlbumLabel
 }

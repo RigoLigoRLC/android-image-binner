@@ -34,11 +34,11 @@ class ProfilesViewModel(
         }
     }
 
-    fun createProfile(name: String = nextProfileName(), sourceAlbumId: String? = null) {
+    fun createProfile(name: String, sourceAlbumId: String? = null) {
         viewModelScope.launch {
             mutationMutex.withLock {
                 val sourceId = sourceAlbumId ?: _uiState.value.availableAlbums.firstOrNull()?.id ?: return@withLock
-                val normalizedName = name.trim().ifBlank { nextProfileName() }
+                val normalizedName = name.trim().ifBlank { return@withLock }
                 val createdProfile = withContext(ioDispatcher) {
                     profileManager.createProfile(
                         name = normalizedName,
@@ -190,10 +190,6 @@ class ProfilesViewModel(
                 selectedProfileId = profile.id
             )
         }
-    }
-
-    private fun nextProfileName(): String {
-        return "Profile ${_uiState.value.profiles.size + 1}"
     }
 
     private fun Profile.toUiModel(): ProfileItemUi {

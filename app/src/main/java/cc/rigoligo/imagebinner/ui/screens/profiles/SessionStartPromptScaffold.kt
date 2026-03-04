@@ -13,6 +13,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import cc.rigoligo.imagebinner.R
 import cc.rigoligo.imagebinner.domain.SessionManager
 import cc.rigoligo.imagebinner.domain.StartDecision
 import kotlinx.coroutines.CoroutineDispatcher
@@ -49,27 +51,27 @@ fun SessionStartPromptScaffold(
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "Start sorting")
+            Text(text = stringResource(R.string.session_start_sorting))
         }
     }
 
     val promptType = pendingPrompt
     if (promptType != null) {
         val title = when (promptType) {
-            StartPromptType.ResumeOrRestart -> "Resume current session?"
-            StartPromptType.ResumeOrDiscard -> "Resume existing session?"
+            StartPromptType.ResumeOrRestart -> stringResource(R.string.session_prompt_resume_restart_title)
+            StartPromptType.ResumeOrDiscard -> stringResource(R.string.session_prompt_resume_discard_title)
         }
         val body = when (promptType) {
             StartPromptType.ResumeOrRestart -> {
-                "A saved session already exists for this profile."
+                stringResource(R.string.session_prompt_resume_restart_body)
             }
             StartPromptType.ResumeOrDiscard -> {
-                "Another profile has an in-progress session."
+                stringResource(R.string.session_prompt_resume_discard_body)
             }
         }
         val dismissLabel = when (promptType) {
-            StartPromptType.ResumeOrRestart -> "Restart session"
-            StartPromptType.ResumeOrDiscard -> "Discard and start new"
+            StartPromptType.ResumeOrRestart -> stringResource(R.string.session_prompt_restart_session)
+            StartPromptType.ResumeOrDiscard -> stringResource(R.string.session_prompt_discard_and_start_new)
         }
 
         AlertDialog(
@@ -88,7 +90,7 @@ fun SessionStartPromptScaffold(
                         }
                     }
                 ) {
-                    Text(text = "Resume existing")
+                    Text(text = stringResource(R.string.session_prompt_resume_existing))
                 }
             },
             dismissButton = {

@@ -14,7 +14,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import cc.rigoligo.imagebinner.R
 import cc.rigoligo.imagebinner.data.media.AlbumItem
 
 @Composable
@@ -29,11 +31,13 @@ fun ProfileEditorDialog(
     onRemoveDestination: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val unknownAlbumLabel = stringResource(R.string.fallback_unknown_album)
+
     AlertDialog(
         modifier = modifier,
         onDismissRequest = onDismissRequest,
         title = {
-            Text(text = "Edit profile: $profileName")
+            Text(text = stringResource(R.string.profile_editor_title, profileName))
         },
         text = {
             Column(
@@ -42,7 +46,7 @@ fun ProfileEditorDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(text = "Source album")
+                Text(text = stringResource(R.string.profile_editor_source_album))
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -50,7 +54,11 @@ fun ProfileEditorDialog(
                         .verticalScroll(rememberScrollState())
                 ) {
                     availableAlbums.forEach { album ->
-                        val selectedSuffix = if (album.id == sourceAlbumId) " (selected)" else ""
+                        val selectedSuffix = if (album.id == sourceAlbumId) {
+                            stringResource(R.string.profile_editor_selected_suffix)
+                        } else {
+                            ""
+                        }
                         TextButton(
                             onClick = { onSourceAlbumSelected(album.id) }
                         ) {
@@ -59,7 +67,7 @@ fun ProfileEditorDialog(
                     }
                 }
 
-                Text(text = "Destination albums")
+                Text(text = stringResource(R.string.profile_editor_destination_albums))
                 destinationAlbumIds.forEach { destinationId ->
                     Row(
                         modifier = Modifier
@@ -67,33 +75,43 @@ fun ProfileEditorDialog(
                             .padding(horizontal = 4.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(text = albumNameById(destinationId, availableAlbums))
+                        Text(
+                            text = albumNameById(
+                                albumId = destinationId,
+                                albums = availableAlbums,
+                                unknownAlbumLabel = unknownAlbumLabel
+                            )
+                        )
                         TextButton(onClick = { onRemoveDestination(destinationId) }) {
-                            Text(text = "Remove")
+                            Text(text = stringResource(R.string.profile_editor_remove))
                         }
                     }
                 }
 
-                Text(text = "Add destination")
+                Text(text = stringResource(R.string.profile_editor_add_destination))
                 availableAlbums
                     .filterNot { destinationAlbumIds.contains(it.id) }
                     .forEach { album ->
                         Button(
                             onClick = { onAddDestination(album.id) }
                         ) {
-                            Text(text = "Add ${album.name}")
+                            Text(text = stringResource(R.string.profile_editor_add_album, album.name))
                         }
                     }
             }
         },
         confirmButton = {
             TextButton(onClick = onDismissRequest) {
-                Text(text = "Close")
+                Text(text = stringResource(R.string.profile_editor_close))
             }
         }
     )
 }
 
-private fun albumNameById(albumId: String, albums: List<AlbumItem>): String {
-    return albums.firstOrNull { it.id == albumId }?.name ?: "Unknown album"
+private fun albumNameById(
+    albumId: String,
+    albums: List<AlbumItem>,
+    unknownAlbumLabel: String
+): String {
+    return albums.firstOrNull { it.id == albumId }?.name ?: unknownAlbumLabel
 }

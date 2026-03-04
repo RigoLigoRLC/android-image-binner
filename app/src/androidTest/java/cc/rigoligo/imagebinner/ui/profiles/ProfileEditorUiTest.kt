@@ -4,6 +4,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import cc.rigoligo.imagebinner.R
 import cc.rigoligo.imagebinner.data.media.AlbumItem
 import cc.rigoligo.imagebinner.ui.screens.profiles.ProfileEditorDialog
 import org.junit.Assert.assertEquals
@@ -20,6 +22,8 @@ class ProfileEditorUiTest {
     @Test
     fun addDestination_allowsUserSelectingSpecificAlbum() {
         var addedAlbumId: String? = null
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val addBinBLabel = context.getString(R.string.profile_editor_add_album, "Bin B")
 
         composeTestRule.setContent {
             ProfileEditorDialog(
@@ -38,7 +42,7 @@ class ProfileEditorUiTest {
             )
         }
 
-        composeTestRule.onNodeWithText("Add Bin B").performClick()
+        composeTestRule.onNodeWithText(addBinBLabel).performClick()
 
         assertEquals("dest-b", addedAlbumId)
     }

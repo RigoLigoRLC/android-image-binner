@@ -26,12 +26,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import cc.rigoligo.imagebinner.R
 import cc.rigoligo.imagebinner.data.local.AppDatabase
 import cc.rigoligo.imagebinner.data.media.MediaStoreCommitMediaOperations
 import cc.rigoligo.imagebinner.domain.ProfileManager
@@ -52,7 +54,7 @@ import kotlinx.coroutines.withContext
 
 private data class MainTabDestination(
     val route: String,
-    val label: String
+    val labelRes: Int
 )
 
 private data class PendingCommitExecution(
@@ -68,8 +70,8 @@ private object MainRoute {
 }
 
 private val mainTabs = listOf(
-    MainTabDestination(route = MainRoute.Profiles, label = "Profiles"),
-    MainTabDestination(route = MainRoute.Settings, label = "Settings")
+    MainTabDestination(route = MainRoute.Profiles, labelRes = R.string.main_tab_profiles),
+    MainTabDestination(route = MainRoute.Settings, labelRes = R.string.main_tab_settings)
 )
 
 @Composable
@@ -94,20 +96,20 @@ fun MainTabsScreen(modifier: Modifier = Modifier) {
     val handleCommitResult: (Result<CommitRunResult>) -> Unit = { runResult ->
         commitInProgress = false
         pendingCommitExecution = null
-                                runResult
-                                    .onSuccess { result ->
-                                        latestCommitResult = result
-                                        navController.navigate(MainRoute.CommitReport) {
-                                            popUpTo(MainRoute.SortingWithArg) {
-                                                inclusive = true
-                                            }
-                                        }
-                                    }
-                                    .onFailure { throwable ->
-                                        val message = if (throwable is SecurityException) {
-                                            "Commit needs media edit permission. Please allow and retry."
-                                        } else {
-                    throwable.message ?: "Commit failed."
+        runResult
+            .onSuccess { result ->
+                latestCommitResult = result
+                navController.navigate(MainRoute.CommitReport) {
+                    popUpTo(MainRoute.SortingWithArg) {
+                        inclusive = true
+                    }
+                }
+            }
+            .onFailure { throwable ->
+                val message = if (throwable is SecurityException) {
+                    context.getString(R.string.main_commit_permission_required)
+                } else {
+                    throwable.message ?: context.getString(R.string.main_commit_failed)
                 }
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             }
@@ -126,7 +128,7 @@ fun MainTabsScreen(modifier: Modifier = Modifier) {
             pendingCommitExecution = null
             Toast.makeText(
                 context,
-                "Commit cancelled: media edit permission was not granted.",
+                context.getString(R.string.main_commit_cancelled_permission),
                 Toast.LENGTH_SHORT
             ).show()
             return@rememberLauncherForActivityResult
@@ -174,7 +176,7 @@ fun MainTabsScreen(modifier: Modifier = Modifier) {
                             },
                             icon = {},
                             label = {
-                                Text(text = tab.label)
+                                Text(text = stringResource(tab.labelRes))
                             }
                         )
                     }
@@ -217,6 +219,7 @@ fun MainTabsScreen(modifier: Modifier = Modifier) {
                             coroutineScope.launch {
                                 val preparation = runCatching {
                                     prepareCommitExecution(
+                                        context = appContext,
                                         database = database,
                                         profileManager = profileManager,
                                         settingsManager = settingsManager
@@ -228,7 +231,7 @@ fun MainTabsScreen(modifier: Modifier = Modifier) {
                                         commitInProgress = false
                                         Toast.makeText(
                                             context,
-                                            throwable.message ?: "Commit failed.",
+                                            throwable.message ?: context.getString(R.string.main_commit_failed),
                                             Toast.LENGTH_SHORT
                                         ).show()
                                     }
@@ -279,7 +282,11 @@ fun MainTabsScreen(modifier: Modifier = Modifier) {
                             val exported = exportReportToDownloads(appContext, export)
                             Toast.makeText(
                                 context,
-                                if (exported) "Report exported to Downloads." else "Report export failed.",
+                                if (exported) {
+                                    context.getString(R.string.main_report_export_success)
+                                } else {
+                                    context.getString(R.string.main_report_export_failed)
+                                },
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
@@ -291,20 +298,21 @@ fun MainTabsScreen(modifier: Modifier = Modifier) {
 }
 
 private suspend fun prepareCommitExecution(
+    context: Context,
     database: AppDatabase,
     profileManager: ProfileManager,
     settingsManager: SettingsManager
 ): PendingCommitExecution = withContext(Dispatchers.IO) {
     val sessionDao = database.sessionDao()
     val savedSession = sessionDao.getGlobalSession()
-        ?: error("No active sorting session.")
+        ?: error(context.getString(R.string.main_error_no_active_session))
     val assignments = sessionDao.getAssignments()
     if (assignments.isEmpty()) {
-        error("No assignments to commit.")
+        error(context.getString(R.string.main_error_no_assignments))
     }
 
     val profile = profileManager.getProfile(savedSession.profileId)
-        ?: error("Profile not found.")
+        ?: error(context.getString(R.string.main_error_profile_not_found))
     val appSettings = settingsManager.getSettings()
     val commitRequest = CommitRequest(
         assignments = assignments.map { assignment ->
@@ -370,7 +378,7 @@ private fun exportReportToDownloads(
     return runCatching {
         resolver.openOutputStream(uri)?.use { stream ->
             stream.write(export.content.toByteArray(Charsets.UTF_8))
-        } ?: error("Unable to open destination.")
+        } ?: error(context.getString(R.string.main_error_unable_open_destination))
         true
     }.getOrElse {
         resolver.delete(uri, null, null)

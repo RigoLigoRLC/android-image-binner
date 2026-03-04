@@ -57,8 +57,10 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import cc.rigoligo.imagebinner.R
 import cc.rigoligo.imagebinner.domain.SortOrder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -77,6 +79,9 @@ fun SortingScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val trashLabel = stringResource(R.string.fallback_trash)
+    val unknownAlbumLabel = stringResource(R.string.fallback_unknown_album)
+    val unassignedLabel = stringResource(R.string.sorting_unassigned)
     val albumNames by produceState<Map<String, String>>(
         initialValue = emptyMap(),
         key1 = state.destinationAlbumIds
@@ -96,23 +101,29 @@ fun SortingScreen(
         ?.let { mediaId -> state.assignments[mediaId] }
         ?.let { targetAlbumId ->
             if (targetAlbumId == SortingViewModel.TRASH_TARGET_ID) {
-                "Trash"
+                trashLabel
             } else {
-                albumNames[targetAlbumId] ?: "Unknown album"
+                albumNames[targetAlbumId] ?: unknownAlbumLabel
             }
         }
-        ?: "Unassigned"
+        ?: unassignedLabel
 
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
                 is SortingUiEvent.AssignmentApplied -> {
                     val targetLabel = if (event.targetAlbumId == SortingViewModel.TRASH_TARGET_ID) {
-                        "Trash"
+                        trashLabel
                     } else {
-                        latestAlbumNames[event.targetAlbumId] ?: "Unknown album"
+                        latestAlbumNames[event.targetAlbumId] ?: unknownAlbumLabel
                     }
-                    imageToastMessage = "${event.mediaLabel} -> $targetLabel"
+                    val mediaLabel = event.mediaDisplayName
+                        ?: context.getString(R.string.fallback_photo_index, event.mediaFallbackIndex)
+                    imageToastMessage = context.getString(
+                        R.string.sorting_assignment_toast,
+                        mediaLabel,
+                        targetLabel
+                    )
                     imageToastRevision += 1
                     imageToastVisible = true
                 }
@@ -151,25 +162,30 @@ fun SortingScreen(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             TextButton(onClick = onBack) {
-                Text(text = "Back")
+                Text(text = stringResource(R.string.sorting_back))
             }
             Text(text = state.overlay.progressLabel, style = MaterialTheme.typography.titleMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = { viewModel.showAssignmentList() }) {
-                    Text(text = "List")
+                    Text(text = stringResource(R.string.sorting_list))
                 }
                 TextButton(
                     onClick = onCommit,
                     enabled = state.overlay.canCommit
                 ) {
-                    Text(text = "Commit")
+                    Text(text = stringResource(R.string.sorting_commit))
                 }
             }
         }
 
-        Text(text = "Captured: ${formatCapturedAt(state.overlay.capturedAt)}")
-        Text(text = "Assigned: ${state.overlay.assignedCount}")
-        Text(text = "Current destination: $currentAssignmentLabel")
+        Text(
+            text = stringResource(
+                R.string.sorting_captured,
+                formatCapturedAt(state.overlay.capturedAt, context.getString(R.string.fallback_not_available))
+            )
+        )
+        Text(text = stringResource(R.string.sorting_assigned, state.overlay.assignedCount))
+        Text(text = stringResource(R.string.sorting_current_destination, currentAssignmentLabel))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SortOrder.entries.forEach { order ->
@@ -178,7 +194,7 @@ fun SortingScreen(
                     onClick = { pendingSortOrder = order },
                     enabled = !selected
                 ) {
-                    Text(text = order.name)
+                    Text(text = order.label())
                 }
             }
         }
@@ -187,11 +203,11 @@ fun SortingScreen(
             AlertDialog(
                 onDismissRequest = { pendingSortOrder = null },
                 title = {
-                    Text(text = "Change sort order")
+                    Text(text = stringResource(R.string.sorting_change_sort_order_title))
                 },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(text = "After switching mode, where should focus go?")
+                        Text(text = stringResource(R.string.sorting_change_sort_order_message))
                         TextButton(onClick = {
                             viewModel.setSortOrderOverride(
                                 sortOrder = requestedSortOrder,
@@ -199,7 +215,7 @@ fun SortingScreen(
                             )
                             pendingSortOrder = null
                         }) {
-                            Text(text = "Jump to first unsorted")
+                            Text(text = stringResource(R.string.sorting_jump_first_unsorted))
                         }
                         TextButton(onClick = {
                             viewModel.setSortOrderOverride(
@@ -208,7 +224,7 @@ fun SortingScreen(
                             )
                             pendingSortOrder = null
                         }) {
-                            Text(text = "Jump to first image")
+                            Text(text = stringResource(R.string.sorting_jump_first_image))
                         }
                         TextButton(onClick = {
                             viewModel.setSortOrderOverride(
@@ -217,14 +233,14 @@ fun SortingScreen(
                             )
                             pendingSortOrder = null
                         }) {
-                            Text(text = "Stay at place")
+                            Text(text = stringResource(R.string.sorting_stay_at_place))
                         }
                     }
                 },
                 confirmButton = {},
                 dismissButton = {
                     TextButton(onClick = { pendingSortOrder = null }) {
-                        Text(text = "Cancel")
+                        Text(text = stringResource(R.string.sorting_cancel))
                     }
                 }
             )
@@ -244,7 +260,7 @@ fun SortingScreen(
         ) {
             if (currentMedia == null) {
                 Text(
-                    text = "No image to display",
+                    text = stringResource(R.string.sorting_no_image),
                     modifier = Modifier.align(Alignment.Center),
                     style = MaterialTheme.typography.titleMedium
                 )
@@ -254,7 +270,9 @@ fun SortingScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = currentMedia.displayName.ifBlank { "Photo ${state.currentIndex + 1}" },
+                        text = currentMedia.displayName.ifBlank {
+                            context.getString(R.string.fallback_photo_index, state.currentIndex + 1)
+                        },
                         style = MaterialTheme.typography.titleMedium
                     )
                     ZoomableMediaImage(
@@ -441,7 +459,7 @@ private fun ZoomableMediaImage(
         if (bitmap == null) {
             Box(modifier = Modifier.fillMaxSize()) {
                 Text(
-                    text = "Unable to load image",
+                    text = stringResource(R.string.sorting_unable_load_image),
                     color = Color.White,
                     modifier = Modifier.align(Alignment.Center)
                 )
@@ -514,7 +532,9 @@ private fun MediaThumbnailStrip(
             ) {
                 if (thumbnail == null) {
                     Text(
-                        text = mediaItem.displayName.take(2).ifBlank { "--" },
+                        text = mediaItem.displayName.take(2).ifBlank {
+                            stringResource(R.string.fallback_photo).take(2)
+                        },
                         textAlign = TextAlign.Center
                     )
                 } else {
@@ -536,7 +556,7 @@ private fun MediaThumbnailStrip(
                                     )
                             ) {
                                 Text(
-                                    text = "OK",
+                                    text = stringResource(R.string.sorting_thumbnail_assigned_badge),
                                     color = MaterialTheme.colorScheme.onPrimary,
                                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
                                 )
@@ -577,12 +597,23 @@ private fun loadMediaBitmap(
     }.getOrNull()
 }
 
-private fun formatCapturedAt(capturedAt: Long?): String {
+@Composable
+private fun SortOrder.label(): String {
+    return when (this) {
+        SortOrder.OLDEST_FIRST -> stringResource(R.string.sort_order_oldest_first)
+        SortOrder.NEWEST_FIRST -> stringResource(R.string.sort_order_newest_first)
+    }
+}
+
+private fun formatCapturedAt(
+    capturedAt: Long?,
+    fallbackLabel: String
+): String {
     if (capturedAt == null || capturedAt <= 0L) {
-        return "-"
+        return fallbackLabel
     }
     return runCatching {
         DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
             .format(Date(capturedAt))
-    }.getOrElse { "-" }
+    }.getOrElse { fallbackLabel }
 }

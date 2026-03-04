@@ -8,6 +8,7 @@ import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import cc.rigoligo.imagebinner.data.local.AppDatabase
+import cc.rigoligo.imagebinner.R
 import cc.rigoligo.imagebinner.domain.Profile
 import cc.rigoligo.imagebinner.domain.ProfileManager
 import cc.rigoligo.imagebinner.domain.SessionManager
@@ -30,11 +31,12 @@ class SessionResumeFlowTest {
     private lateinit var sessionManager: SessionManager
     private lateinit var profileA: Profile
     private lateinit var profileB: Profile
+    private lateinit var appContext: android.content.Context
 
     @Before
     fun setUp() {
-        val context = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
-        db = AppDatabase.getInstance(context)
+        appContext = InstrumentationRegistry.getInstrumentation().targetContext
+        db = AppDatabase.getInstance(appContext.applicationContext)
         db.clearAllTables()
 
         profileManager = ProfileManager(db.profileDao())
@@ -61,14 +63,17 @@ class SessionResumeFlowTest {
     fun existingSessionFromAnotherProfile_promptsResumeOrDiscard() {
         launchProfilesAndTapStartSorting(profileName = "Profile B")
 
+        val promptTitle = appContext.getString(R.string.session_prompt_resume_discard_title)
+        val resumeLabel = appContext.getString(R.string.session_prompt_resume_existing)
+        val discardLabel = appContext.getString(R.string.session_prompt_discard_and_start_new)
         composeTestRule.waitUntil(timeoutMillis = 5_000L) {
-            composeTestRule.onAllNodesWithText("Resume existing session?").fetchSemanticsNodes().isNotEmpty()
+            composeTestRule.onAllNodesWithText(promptTitle).fetchSemanticsNodes().isNotEmpty()
         }
-        composeTestRule.onNodeWithText("Resume existing session?").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Resume existing").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Discard and start new").assertIsDisplayed()
+        composeTestRule.onNodeWithText(promptTitle).assertIsDisplayed()
+        composeTestRule.onNodeWithText(resumeLabel).assertIsDisplayed()
+        composeTestRule.onNodeWithText(discardLabel).assertIsDisplayed()
 
-        composeTestRule.onNodeWithText("Resume existing").performClick()
+        composeTestRule.onNodeWithText(resumeLabel).performClick()
 
         assertSortingScreen(profileA.id)
         assertSessionProfile(profileA.id)
@@ -78,10 +83,11 @@ class SessionResumeFlowTest {
     @Test
     fun discardChoice_startsRequestedProfileInSortingUi() {
         launchProfilesAndTapStartSorting(profileName = "Profile B")
+        val discardLabel = appContext.getString(R.string.session_prompt_discard_and_start_new)
         composeTestRule.waitUntil(timeoutMillis = 5_000L) {
-            composeTestRule.onAllNodesWithText("Discard and start new").fetchSemanticsNodes().isNotEmpty()
+            composeTestRule.onAllNodesWithText(discardLabel).fetchSemanticsNodes().isNotEmpty()
         }
-        composeTestRule.onNodeWithText("Discard and start new").performClick()
+        composeTestRule.onNodeWithText(discardLabel).performClick()
 
         assertSortingScreen(profileB.id)
         assertSessionProfile(profileB.id)
@@ -97,29 +103,37 @@ class SessionResumeFlowTest {
         }
         composeTestRule.onNodeWithText(profileName).performClick()
 
+        val startSortingLabel = appContext.getString(R.string.session_start_sorting)
         composeTestRule.waitUntil(timeoutMillis = 5_000L) {
-            composeTestRule.onAllNodesWithText("Start sorting").fetchSemanticsNodes().isNotEmpty()
+            composeTestRule.onAllNodesWithText(startSortingLabel).fetchSemanticsNodes().isNotEmpty()
         }
-        composeTestRule.onNodeWithText("Start sorting").performClick()
+        composeTestRule.onNodeWithText(startSortingLabel).performClick()
     }
 
     private fun assertSortingScreen(expectedProfileId: Long) {
-        val sortingCurrentText = "Current: Done (swipe up to trash)"
+        val sortingCurrentText = appContext.getString(
+            R.string.sorting_current_destination,
+            appContext.getString(R.string.sorting_unassigned)
+        )
+        val backLabel = appContext.getString(R.string.sorting_back)
+        val listLabel = appContext.getString(R.string.sorting_list)
         composeTestRule.waitUntil(timeoutMillis = 5_000L) {
             composeTestRule.onAllNodesWithText(sortingCurrentText).fetchSemanticsNodes().isNotEmpty()
         }
-        composeTestRule.onNodeWithText("Back").assertIsDisplayed()
-        composeTestRule.onNodeWithText("List").assertIsDisplayed()
+        composeTestRule.onNodeWithText(backLabel).assertIsDisplayed()
+        composeTestRule.onNodeWithText(listLabel).assertIsDisplayed()
         composeTestRule.onNodeWithText(sortingCurrentText).assertIsDisplayed()
         assertSessionProfile(expectedProfileId)
     }
 
     private fun assertBackNavigationToProfiles() {
-        composeTestRule.onNodeWithText("Back").performClick()
+        val backLabel = appContext.getString(R.string.sorting_back)
+        val startSortingLabel = appContext.getString(R.string.session_start_sorting)
+        composeTestRule.onNodeWithText(backLabel).performClick()
         composeTestRule.waitUntil(timeoutMillis = 5_000L) {
-            composeTestRule.onAllNodesWithText("Start sorting").fetchSemanticsNodes().isNotEmpty()
+            composeTestRule.onAllNodesWithText(startSortingLabel).fetchSemanticsNodes().isNotEmpty()
         }
-        composeTestRule.onNodeWithText("Start sorting").assertIsDisplayed()
+        composeTestRule.onNodeWithText(startSortingLabel).assertIsDisplayed()
     }
 
     private fun assertSessionProfile(expectedProfileId: Long) {

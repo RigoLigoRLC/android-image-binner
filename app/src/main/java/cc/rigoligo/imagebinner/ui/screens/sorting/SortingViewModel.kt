@@ -273,10 +273,10 @@ class SortingViewModel(
     private suspend fun assignCurrentLocked(targetAlbumId: String) {
         val currentState = _uiState.value
         val mediaId = currentState.currentMediaId ?: return
-        val mediaLabel = currentState.currentMedia
+        val mediaDisplayName = currentState.currentMedia
             ?.displayName
             ?.takeIf { it.isNotBlank() }
-            ?: "Photo ${currentState.currentIndex + 1}"
+        val mediaFallbackIndex = currentState.currentIndex + 1
 
         val nextState = withContext(ioDispatcher) {
             sessionManager.saveAssignment(
@@ -304,7 +304,8 @@ class SortingViewModel(
         _uiState.value = nextState
         _events.tryEmit(
             SortingUiEvent.AssignmentApplied(
-                mediaLabel = mediaLabel,
+                mediaDisplayName = mediaDisplayName,
+                mediaFallbackIndex = mediaFallbackIndex,
                 targetAlbumId = targetAlbumId
             )
         )
@@ -340,14 +341,12 @@ class SortingViewModel(
                 val mediaLabel = mediaItem
                     ?.displayName
                     ?.takeIf { label -> label.isNotBlank() }
-                    ?: mediaIndexById[entry.key]
-                        ?.let { index -> "Photo ${index + 1}" }
-                    ?: "Photo"
+                val mediaFallbackIndex = mediaIndexById[entry.key]?.plus(1)
                 AssignmentListItem(
                     mediaId = entry.key,
                     targetAlbumId = entry.value,
-                    targetLabel = entry.value.toTargetLabel(),
                     mediaLabel = mediaLabel,
+                    mediaFallbackIndex = mediaFallbackIndex,
                     capturedAt = mediaById[entry.key]?.capturedAt
                 )
             }
@@ -370,14 +369,6 @@ class SortingViewModel(
             ),
             assignmentList = previous.assignmentList.copy(items = assignmentItems)
         )
-    }
-
-    private fun String.toTargetLabel(): String {
-        return if (this == TRASH_TARGET_ID) {
-            "Trash"
-        } else {
-            "Unknown album"
-        }
     }
 
     companion object {
@@ -414,14 +405,15 @@ data class AssignmentListUiState(
 data class AssignmentListItem(
     val mediaId: String,
     val targetAlbumId: String,
-    val targetLabel: String,
-    val mediaLabel: String,
+    val mediaLabel: String?,
+    val mediaFallbackIndex: Int?,
     val capturedAt: Long?
 )
 
 sealed interface SortingUiEvent {
     data class AssignmentApplied(
-        val mediaLabel: String,
+        val mediaDisplayName: String?,
+        val mediaFallbackIndex: Int,
         val targetAlbumId: String
     ) : SortingUiEvent
 }

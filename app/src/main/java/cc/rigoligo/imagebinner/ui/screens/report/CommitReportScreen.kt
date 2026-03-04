@@ -23,8 +23,12 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import cc.rigoligo.imagebinner.R
+import cc.rigoligo.imagebinner.data.export.ReportExportStrings
 import cc.rigoligo.imagebinner.data.media.MediaStoreRepository
+import cc.rigoligo.imagebinner.domain.commit.CommitAction
 import cc.rigoligo.imagebinner.domain.commit.CommitRequest
 import cc.rigoligo.imagebinner.domain.commit.CommitItemResult
 import kotlinx.coroutines.Dispatchers
@@ -39,6 +43,32 @@ fun CommitReportScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val fallbackPhotoLabel = stringResource(R.string.fallback_photo)
+    val actionMoveToAlbum = stringResource(R.string.report_action_move_to_album)
+    val actionMoveToTrashAlbum = stringResource(R.string.report_action_move_to_trash_album)
+    val actionMoveToSystemTrash = stringResource(R.string.report_action_move_to_system_trash)
+    val statusSuccessCode = stringResource(R.string.report_export_status_success_code)
+    val statusFailedCode = stringResource(R.string.report_export_status_failed_code)
+    val statusSuccessLabel = stringResource(R.string.report_status_success)
+    val statusFailedLabel = stringResource(R.string.report_status_failed)
+    val reportFileNamePrefix = stringResource(R.string.report_file_name_prefix)
+    val reportFileNameFallback = stringResource(R.string.report_file_name_fallback)
+    val reportExportStrings = ReportExportStrings(
+        csvHeaderMediaId = context.getString(R.string.report_export_csv_header_media_id),
+        csvHeaderTargetAlbumId = context.getString(R.string.report_export_csv_header_target_album_id),
+        csvHeaderActionCode = context.getString(R.string.report_export_csv_header_action_code),
+        csvHeaderActionLabel = context.getString(R.string.report_export_csv_header_action_label),
+        csvHeaderStatusCode = context.getString(R.string.report_export_csv_header_status_code),
+        csvHeaderStatusLabel = context.getString(R.string.report_export_csv_header_status_label),
+        csvHeaderErrorMessage = context.getString(R.string.report_export_csv_header_error_message),
+        actionMoveToAlbum = actionMoveToAlbum,
+        actionMoveToTrashAlbum = actionMoveToTrashAlbum,
+        actionMoveToSystemTrash = actionMoveToSystemTrash,
+        statusSuccessCode = statusSuccessCode,
+        statusFailedCode = statusFailedCode,
+        statusSuccessLabel = statusSuccessLabel,
+        statusFailedLabel = statusFailedLabel
+    )
 
     val albumNames by produceState<Map<String, String>>(
         initialValue = emptyMap(),
@@ -63,7 +93,7 @@ fun CommitReportScreen(
                     loadMediaDisplayName(
                         contentResolver = context.contentResolver,
                         mediaId = mediaId
-                    ) ?: "Photo"
+                    ) ?: fallbackPhotoLabel
                 }
         }
     }
@@ -79,10 +109,24 @@ fun CommitReportScreen(
         onBack = onBack,
         onFailedOnlyChanged = viewModel::setFailedOnlyFilter,
         onExportCsv = {
-            viewModel.requestExport(ReportExportFormat.CSV)
+            viewModel.requestExport(
+                format = ReportExportFormat.CSV,
+                strings = CommitReportExportStrings(
+                    fileNamePrefix = reportFileNamePrefix,
+                    fileNameFallback = reportFileNameFallback,
+                    exporterStrings = reportExportStrings
+                )
+            )
         },
         onExportJson = {
-            viewModel.requestExport(ReportExportFormat.JSON)
+            viewModel.requestExport(
+                format = ReportExportFormat.JSON,
+                strings = CommitReportExportStrings(
+                    fileNamePrefix = reportFileNamePrefix,
+                    fileNameFallback = reportFileNameFallback,
+                    exporterStrings = reportExportStrings
+                )
+            )
         },
         albumNames = albumNames,
         mediaLabels = mediaLabels,
@@ -102,6 +146,9 @@ fun CommitReportScreen(
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
+    val fallbackTrashLabel = stringResource(R.string.fallback_trash)
+    val fallbackUnknownAlbumLabel = stringResource(R.string.fallback_unknown_album)
+    val fallbackPhotoLabel = stringResource(R.string.fallback_photo)
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -115,15 +162,18 @@ fun CommitReportScreen(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             TextButton(onClick = onBack) {
-                Text(text = "Back")
+                Text(text = stringResource(R.string.report_back))
             }
-            Text(text = "Commit report", style = MaterialTheme.typography.titleLarge)
+            Text(
+                text = stringResource(R.string.report_title),
+                style = MaterialTheme.typography.titleLarge
+            )
             Text(text = "")
         }
 
-        Text(text = "Total: ${state.totalCount}")
-        Text(text = "Succeeded: ${state.successCount}")
-        Text(text = "Failed: ${state.failureCount}")
+        Text(text = stringResource(R.string.report_total, state.totalCount))
+        Text(text = stringResource(R.string.report_succeeded, state.successCount))
+        Text(text = stringResource(R.string.report_failed, state.failureCount))
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -133,31 +183,37 @@ fun CommitReportScreen(
                 checked = state.showFailedOnly,
                 onCheckedChange = onFailedOnlyChanged
             )
-            Text(text = "Show failed only")
+            Text(text = stringResource(R.string.report_show_failed_only))
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = onExportCsv) {
-                Text(text = "Export CSV")
+                Text(text = stringResource(R.string.report_export_csv))
             }
             Button(onClick = onExportJson) {
-                Text(text = "Export JSON")
+                Text(text = stringResource(R.string.report_export_json))
             }
         }
 
-        Text(text = if (state.showFailedOnly) "Failed items" else "All items")
+        Text(
+            text = if (state.showFailedOnly) {
+                stringResource(R.string.report_failed_items)
+            } else {
+                stringResource(R.string.report_all_items)
+            }
+        )
 
         if (state.visibleItems.isEmpty()) {
-            Text(text = "No items to show.")
+            Text(text = stringResource(R.string.report_no_items))
         } else {
             state.visibleItems.forEach { item ->
                 val targetLabel = when {
-                    item.targetAlbumId == CommitRequest.TRASH_TARGET_ID -> "Trash"
-                    else -> albumNames[item.targetAlbumId] ?: "Unknown album"
+                    item.targetAlbumId == CommitRequest.TRASH_TARGET_ID -> fallbackTrashLabel
+                    else -> albumNames[item.targetAlbumId] ?: fallbackUnknownAlbumLabel
                 }
                 ReportItemRow(
                     item = item,
-                    mediaLabel = mediaLabels[item.mediaId] ?: "Photo",
+                    mediaLabel = mediaLabels[item.mediaId] ?: fallbackPhotoLabel,
                     targetLabel = targetLabel
                 )
             }
@@ -171,13 +227,29 @@ private fun ReportItemRow(
     mediaLabel: String,
     targetLabel: String
 ) {
+    val unknownErrorLabel = stringResource(R.string.report_unknown_error)
+    val actionLabel = when (item.action) {
+        CommitAction.MOVE_TO_ALBUM -> stringResource(R.string.report_action_move_to_album)
+        CommitAction.MOVE_TO_TRASH_ALBUM -> stringResource(R.string.report_action_move_to_trash_album)
+        CommitAction.MOVE_TO_SYSTEM_TRASH -> stringResource(R.string.report_action_move_to_system_trash)
+    }
+    val statusLabel = if (item.success) {
+        stringResource(R.string.report_status_success)
+    } else {
+        stringResource(R.string.report_status_failed)
+    }
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(text = "Media: $mediaLabel")
-        Text(text = "Target: $targetLabel")
-        Text(text = "Action: ${item.action.name}")
-        Text(text = "Status: ${if (item.success) "Success" else "Failed"}")
+        Text(text = stringResource(R.string.report_item_media, mediaLabel))
+        Text(text = stringResource(R.string.report_item_target, targetLabel))
+        Text(text = stringResource(R.string.report_item_action, actionLabel))
+        Text(text = stringResource(R.string.report_item_status, statusLabel))
         if (!item.success) {
-            Text(text = "Error: ${item.errorMessage ?: "Unknown error"}")
+            Text(
+                text = stringResource(
+                    R.string.report_item_error,
+                    item.errorMessage ?: unknownErrorLabel
+                )
+            )
         }
     }
 }

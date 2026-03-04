@@ -2,6 +2,7 @@ package cc.rigoligo.imagebinner.ui.screens.report
 
 import androidx.lifecycle.ViewModel
 import cc.rigoligo.imagebinner.data.export.ReportExporter
+import cc.rigoligo.imagebinner.data.export.ReportExportStrings
 import cc.rigoligo.imagebinner.domain.commit.CommitItemResult
 import cc.rigoligo.imagebinner.domain.commit.CommitRunResult
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,11 +27,20 @@ class CommitReportViewModel(
         }
     }
 
-    fun requestExport(format: ReportExportFormat) {
+    fun requestExport(
+        format: ReportExportFormat,
+        strings: CommitReportExportStrings
+    ) {
         val state = _uiState.value
         val content = when (format) {
-            ReportExportFormat.CSV -> reportExporter.toCsv(state.itemResults)
-            ReportExportFormat.JSON -> reportExporter.toJson(state.itemResults)
+            ReportExportFormat.CSV -> reportExporter.toCsv(
+                itemResults = state.itemResults,
+                strings = strings.exporterStrings
+            )
+            ReportExportFormat.JSON -> reportExporter.toJson(
+                itemResults = state.itemResults,
+                strings = strings.exporterStrings
+            )
         }
         val timestamp = if (state.finishedAtEpochMillis > 0L) {
             state.finishedAtEpochMillis
@@ -42,7 +52,7 @@ class CommitReportViewModel(
             current.copy(
                 pendingExport = PreparedCommitReportExport(
                     format = format,
-                    fileName = "commit-report-${formatReportTimestamp(timestamp)}.${format.fileExtension}",
+                    fileName = "${strings.fileNamePrefix}-${formatReportTimestamp(timestamp, strings.fileNameFallback)}.${format.fileExtension}",
                     mimeType = format.mimeType,
                     content = content,
                     createdAtEpochMillis = nowEpochMillis()
@@ -57,12 +67,21 @@ class CommitReportViewModel(
         }
     }
 
-    private fun formatReportTimestamp(timestamp: Long): String {
+    private fun formatReportTimestamp(
+        timestamp: Long,
+        fallback: String
+    ): String {
         return runCatching {
             SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date(timestamp))
-        }.getOrElse { "report" }
+        }.getOrElse { fallback }
     }
 }
+
+data class CommitReportExportStrings(
+    val fileNamePrefix: String,
+    val fileNameFallback: String,
+    val exporterStrings: ReportExportStrings
+)
 
 data class CommitReportUiState(
     val startedAtEpochMillis: Long = 0L,

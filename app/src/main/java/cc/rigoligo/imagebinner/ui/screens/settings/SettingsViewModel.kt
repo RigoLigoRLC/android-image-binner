@@ -3,6 +3,7 @@ package cc.rigoligo.imagebinner.ui.screens.settings
 import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import cc.rigoligo.imagebinner.domain.AppLanguage
 import cc.rigoligo.imagebinner.domain.SettingsManager
 import cc.rigoligo.imagebinner.domain.SortOrder
 import cc.rigoligo.imagebinner.domain.TrashMode
@@ -20,7 +21,8 @@ import kotlinx.coroutines.withContext
 class SettingsViewModel(
     private val settingsManager: SettingsManager,
     private val sdkIntProvider: () -> Int = { Build.VERSION.SDK_INT },
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val applyLanguage: (AppLanguage) -> Unit = {}
 ) : ViewModel() {
     private val mutationMutex = Mutex()
     private val supportsSystemTrash: Boolean = sdkIntProvider() >= SYSTEM_TRASH_MIN_API
@@ -46,7 +48,8 @@ class SettingsViewModel(
                 _uiState.update { state ->
                     state.copy(
                         defaultSortOrder = settings.defaultSortOrder,
-                        trashMode = resolvedTrashMode
+                        trashMode = resolvedTrashMode,
+                        language = settings.language
                     )
                 }
             }
@@ -80,6 +83,20 @@ class SettingsViewModel(
         }
     }
 
+    fun setLanguage(language: AppLanguage) {
+        viewModelScope.launch {
+            mutationMutex.withLock {
+                withContext(ioDispatcher) {
+                    settingsManager.updateLanguage(language)
+                }
+                _uiState.update { state ->
+                    state.copy(language = language)
+                }
+                applyLanguage(language)
+            }
+        }
+    }
+
     private fun supportedTrashMode(requested: TrashMode): TrashMode {
         return if (supportsSystemTrash) {
             requested
@@ -96,5 +113,6 @@ class SettingsViewModel(
 data class SettingsUiState(
     val defaultSortOrder: SortOrder = SortOrder.OLDEST_FIRST,
     val trashMode: TrashMode = TrashMode.TRASH_ALBUM,
-    val supportsSystemTrash: Boolean = false
+    val supportsSystemTrash: Boolean = false,
+    val language: AppLanguage = AppLanguage.SYSTEM
 )

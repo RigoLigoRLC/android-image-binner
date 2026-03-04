@@ -10,6 +10,10 @@ class SettingsManager(
         return settingsDao.get().toDomain()
     }
 
+    fun getLanguage(): AppLanguage {
+        return getSettings().language
+    }
+
     fun updateDefaultSortOrder(sortOrder: SortOrder): AppSettings {
         val updated = currentOrDefault().copy(defaultSortOrder = sortOrder.storageValue)
         settingsDao.upsert(updated)
@@ -22,6 +26,12 @@ class SettingsManager(
         return updated.toDomain()
     }
 
+    fun updateLanguage(language: AppLanguage): AppSettings {
+        val updated = currentOrDefault().copy(language = language.storageValue)
+        settingsDao.upsert(updated)
+        return updated.toDomain()
+    }
+
     private fun currentOrDefault(): AppSettingsEntity {
         return settingsDao.get() ?: AppSettingsEntity()
     }
@@ -30,15 +40,29 @@ class SettingsManager(
         val settings = this ?: AppSettingsEntity()
         return AppSettings(
             defaultSortOrder = SortOrder.fromStorage(settings.defaultSortOrder),
-            trashMode = TrashMode.fromStorage(settings.trashMode)
+            trashMode = TrashMode.fromStorage(settings.trashMode),
+            language = AppLanguage.fromStorage(settings.language)
         )
     }
 }
 
 data class AppSettings(
     val defaultSortOrder: SortOrder,
-    val trashMode: TrashMode
+    val trashMode: TrashMode,
+    val language: AppLanguage
 )
+
+enum class AppLanguage(val storageValue: String) {
+    SYSTEM("SYSTEM"),
+    ENGLISH("ENGLISH"),
+    SIMPLIFIED_CHINESE("SIMPLIFIED_CHINESE");
+
+    companion object {
+        fun fromStorage(value: String): AppLanguage {
+            return entries.firstOrNull { it.storageValue == value } ?: SYSTEM
+        }
+    }
+}
 
 enum class SortOrder(val storageValue: String) {
     NEWEST_FIRST("NEWEST_FIRST"),
